@@ -76,6 +76,42 @@ Interpretación: evidencia estadística fuerte de diferencias entre grupos; esto
 ## 5. Representación de resultados
 Figuras generadas en `reports/figures/`: `roc_curve.png` y `confusion_matrix.png`. Tablas en `reports/tables/`.
 
+## 5. Representación de resultados
+### 5.1 Vista previa del dataset limpio
+Primeras 5 filas (columnas seleccionadas):
+
+Muestra estratificada (3 filas de `<=50K` y 2 filas de `>50K`):
+
+|   age | workclass        | education    |   hours_per_week |   capital_gain |   capital_loss | income   |
+|------:|:-----------------|:-------------|-----------------:|---------------:|---------------:|:---------|
+|    28 | Private          | Some-college |               25 |              0 |              0 | <=50K    |
+|    44 | Private          | Some-college |               38 |              0 |              0 | <=50K    |
+|    24 | Unknown          | Some-college |               30 |              0 |              0 | <=50K    |
+|    27 | Self-emp-not-inc | HS-grad      |               60 |              0 |              0 | >50K     |
+|    43 | Self-emp-inc     | Assoc-voc    |               50 |              0 |              0 | >50K     |
+
+
+### 5.2 Métricas del modelo supervisado
+Tabla resumida (precision/recall/F1/support):
+
+|              |   precision |   recall |   f1-score |   support |
+|:-------------|------------:|---------:|-----------:|----------:|
+| 0            |    0.881401 | 0.93207  |   0.906028 |      9289 |
+| 1            |    0.735762 | 0.6013   |   0.66177  |      2922 |
+| macro avg    |    0.808581 | 0.766685 |   0.783899 |     12211 |
+| weighted avg |    0.846551 | 0.852919 |   0.847579 |     12211 |
+
+### 5.3 Gráficos generados
+Se incluyen las figuras principales del análisis:
+
+**ROC Curve**
+
+![ROC Curve](figures/roc_curve.png)
+
+**Matriz de confusión**
+
+![Confusion Matrix](figures/confusion_matrix.png)
+
 ## 6. Conclusiones
 El dataset permite construir un clasificador con buen desempeño (AUC alto) frente al baseline, aunque la recuperación de la clase `>50K` es moderada por el desbalance. El contraste sugiere diferencias consistentes en horas trabajadas entre grupos. El análisis no supervisado se interpreta como exploratorio.
 

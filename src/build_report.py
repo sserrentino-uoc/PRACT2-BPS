@@ -85,7 +85,7 @@ def main() -> Path:
     Path
         Ruta del Markdown generado.
     """
-    _, _, reports_dir, tables_dir = ensure_dirs()
+    _, processed_dir, reports_dir, tables_dir = ensure_dirs()
     cfg = load_project_config()
 
     summary_path = reports_dir / "summary.json"
@@ -283,6 +283,81 @@ def main() -> Path:
         "Figuras generadas en `reports/figures/`: `roc_curve.png` y "
         "`confusion_matrix.png`. Tablas en `reports/tables/`."
     )
+    md.append("")
+
+
+    # 5
+    md.append("## 5. Representación de resultados")
+
+    # 5.1 Preview del dataset limpio (5 filas)
+    md.append("### 5.1 Vista previa del dataset limpio")
+    clean_path = processed_dir / "adult_clean.csv"
+    df_clean = pd.read_csv(clean_path)
+    preview_cols = [
+        "age",
+        "workclass",
+        "education",
+        "hours_per_week",
+        "capital_gain",
+        "capital_loss",
+        "income",
+    ]
+    preview_cols = [c for c in preview_cols if c in df_clean.columns]
+    md.append("Primeras 5 filas (columnas seleccionadas):")
+    md.append("")
+    # Preview estratificada: 3 filas de <=50K y 2 filas de >50K
+    # (si no hay suficientes, completa con las que existan)
+    df_clean["income"] = df_clean["income"].astype("string").str.strip()
+
+    df_lo = df_clean[df_clean["income"] == "<=50K"].sample(n=3, random_state=42)
+    df_hi = df_clean[df_clean["income"] == ">50K"].sample(n=2, random_state=42)
+
+    preview_df = pd.concat([df_lo, df_hi], ignore_index=True)
+
+    # Si por alguna razón faltan filas (poco probable), completar hasta 5
+    if len(preview_df) < 5:
+        preview_df = pd.concat(
+            [preview_df, df_clean.head(5 - len(preview_df))],
+            ignore_index=True,
+        )
+
+    md.append(
+        "Muestra estratificada (3 filas de `<=50K` y 2 filas de `>50K`):"
+    )
+    md.append("")
+    md.append(preview_df[preview_cols].to_markdown(index=False))
+    md.append("")    
+    md.append("")
+
+    # 5.2 Tabla de métricas supervisadas (classification report)
+    md.append("### 5.2 Métricas del modelo supervisado")
+    cls_path = tables_dir / "classification_report.csv"
+    if cls_path.exists():
+        cls_df = pd.read_csv(cls_path, index_col=0)
+        show_rows = ["0", "1", "macro avg", "weighted avg"]
+        cls_df = cls_df.loc[[r for r in show_rows if r in cls_df.index], :]
+        md.append("Tabla resumida (precision/recall/F1/support):")
+        md.append("")
+        md.append(cls_df.to_markdown())
+        md.append("")
+    else:
+        md.append(
+            "No se encontró `reports/tables/classification_report.csv` "
+            "(verificar ejecución del pipeline)."
+        )
+        md.append("")
+
+    # 5.3 Figuras
+    md.append("### 5.3 Gráficos generados")
+    md.append("Se incluyen las figuras principales del análisis:")
+    md.append("")
+    md.append("**ROC Curve**")
+    md.append("")
+    md.append("![ROC Curve](figures/roc_curve.png)")
+    md.append("")
+    md.append("**Matriz de confusión**")
+    md.append("")
+    md.append("![Confusion Matrix](figures/confusion_matrix.png)")
     md.append("")
 
     # 6

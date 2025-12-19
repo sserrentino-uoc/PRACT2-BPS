@@ -24,6 +24,9 @@ from reportlab.pdfgen.canvas import Canvas
 
 from .utils import ensure_dirs
 
+from reportlab.lib.utils import ImageReader
+
+
 
 def _wrap_line(text: str, max_width: float, font: str, size: int) -> List[str]:
     """
@@ -105,6 +108,15 @@ def main() -> Path:
         elif in_table and not line.strip():
             in_table = False
 
+        # Render de imágenes Markdown: ![alt](figures/x.png)
+        if line.strip().startswith("![") and "](" in line and line.strip().endswith(")"):
+            try:
+                rel = line.split("](", 1)[1].rsplit(")", 1)[0].strip()
+                draw_image(rel)
+            except Exception:
+                draw_text(line, "Helvetica", 10, 14)
+            continue
+
         if line.startswith("# "):
             draw_text(line[2:].strip(), "Helvetica-Bold", 16, 20)
             y -= 6
@@ -131,6 +143,36 @@ def main() -> Path:
     canvas.save()
     print(f"[make_memoria_pdf] Wrote: {pdf_path}")
     return pdf_path
+
+    def draw_image(rel_path: str) -> None:
+        nonlocal y
+        img_path = (reports_dir / rel_path).resolve()
+        if not img_path.exists():
+            draw_text(f"[Imagen no encontrada: {rel_path}]", "Helvetica", 10, 14)
+            return
+
+        # Ajuste de ancho máximo (manteniendo proporción)
+        max_w = width - 2 * margin_x
+        img = ImageReader(str(img_path))
+        iw, ih = img.getSize()
+        scale = max_w / float(iw)
+        draw_w = max_w
+        draw_h = float(ih) * scale
+
+        # Salto de página si no entra
+        if y - draw_h < margin_y:
+            new_page()
+
+        canvas.drawImage(
+            img,
+            margin_x,
+            y - draw_h,
+            width=draw_w,
+            height=draw_h,
+            preserveAspectRatio=True,
+            mask="auto",
+        )
+        y -= (draw_h + 10)
 
 
 if __name__ == "__main__":
