@@ -1,1 +1,0 @@
-"""PRACT2 package."""
