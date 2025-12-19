@@ -75,22 +75,16 @@ IC 95% (bootstrap) para la diferencia de **medias** (>50K − <=50K): **[6.39, 6
 Interpretación: evidencia estadística fuerte de diferencias entre grupos; esto indica asociación, no causalidad.
 
 ## 5. Representación de resultados
-Figuras generadas en `reports/figures/`: `roc_curve.png` y `confusion_matrix.png`. Tablas en `reports/tables/`.
-
-## 5. Representación de resultados
 ### 5.1 Vista previa del dataset limpio
-Primeras 5 filas (columnas seleccionadas):
-
 Muestra estratificada (3 filas de `<=50K` y 2 filas de `>50K`):
 
-|   age | workclass        | education    |   hours_per_week |   capital_gain |   capital_loss | income   |
-|------:|:-----------------|:-------------|-----------------:|---------------:|---------------:|:---------|
-|    28 | Private          | Some-college |               25 |              0 |              0 | <=50K    |
-|    44 | Private          | Some-college |               38 |              0 |              0 | <=50K    |
-|    24 | Unknown          | Some-college |               30 |              0 |              0 | <=50K    |
-|    27 | Self-emp-not-inc | HS-grad      |               60 |              0 |              0 | >50K     |
-|    43 | Self-emp-inc     | Assoc-voc    |               50 |              0 |              0 | >50K     |
-
+|   age | workclass        | education   |   hours_per_week |   capital_gain |   capital_loss | income   |
+|------:|:-----------------|:------------|-----------------:|---------------:|---------------:|:---------|
+|    39 | State-gov        | Bachelors   |               40 |           2174 |              0 | <=50K    |
+|    50 | Self-emp-not-inc | Bachelors   |               13 |              0 |              0 | <=50K    |
+|    38 | Private          | HS-grad     |               40 |              0 |              0 | <=50K    |
+|    52 | Self-emp-not-inc | HS-grad     |               45 |              0 |              0 | >50K     |
+|    31 | Private          | Masters     |               50 |          14084 |              0 | >50K     |
 
 ### 5.2 Métricas del modelo supervisado
 Tabla resumida (precision/recall/F1/support):
