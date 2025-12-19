@@ -1,0 +1,10 @@
+col,missing_count,missing_pct
+workclass,0,0.0
+education,0,0.0
+marital_status,0,0.0
+occupation,0,0.0
+relationship,0,0.0
+race,0,0.0
+sex,0,0.0
+native_country,0,0.0
+income,0,0.0
