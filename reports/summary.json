@@ -1,0 +1,46 @@
+{
+  "n_rows": 48842,
+  "class_distribution": {
+    "total": 48842,
+    "counts": {
+      "0": 37155,
+      "1": 11687
+    },
+    "pct": {
+      "0": 0.7607182343065395,
+      "1": 0.23928176569346055
+    }
+  },
+  "supervised": {
+    "roc_auc": 0.9047950631442443,
+    "accuracy": 0.852919498812546,
+    "precision_pos": 0.7357621440536013,
+    "recall_pos": 0.6013004791238877,
+    "f1_pos": 0.6617702448210923,
+    "tn": 8658,
+    "fp": 631,
+    "fn": 1165,
+    "tp": 1757
+  },
+  "hypothesis_test": {
+    "test": "Mann–Whitney U",
+    "variable": "hours_per_week",
+    "group0": "<=50K",
+    "group1": ">50K",
+    "mean0": 38.84004844570045,
+    "mean1": 45.45289638059382,
+    "median0": 40.0,
+    "median1": 40.0,
+    "p_value": 0.0,
+    "ci_mean_diff_lo": 6.390445710818758,
+    "ci_mean_diff_hi": 6.855504742717451
+  },
+  "clustering": {
+    "sample_n": 800,
+    "k": 2,
+    "silhouette": 0.41176959667890556
+  },
+  "notes": {
+    "clustering_sample_note": "El análisis no supervisado se realiza sobre una muestra para mejorar escalabilidad; se reporta el tamaño de muestra."
+  }
+}
