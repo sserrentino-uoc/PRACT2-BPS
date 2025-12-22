@@ -12,3 +12,8 @@ logs/
 # SO/Editor
 .DS_Store
 .vscode/
+
+# Zip y 7z
+*.7z
+*.zip
+*.rar
