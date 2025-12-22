@@ -1,10 +1,12 @@
 # PRACT2 — Adult Income (Python)
 
 ## Integrantes
-- NOMBRE APELLIDO (Integrante 1) — iniciales: AA
-- NOMBRE APELLIDO (Integrante 2) — iniciales: BB
+- SEBASTIAN SERRENTINO (Integrante 1) — iniciales: SS
+- ALBERTO MOCHON (Integrante 2) — iniciales: AM
 
-Repositorio: PENDIENTE
+Fuente de Datos: Becker, B. & Kohavi, R. (1996). Adult [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5XW20.
+
+Repositorio GitHub: PENDIENTE
 
 Vídeo (Google Drive UOC): PENDIENTE
 

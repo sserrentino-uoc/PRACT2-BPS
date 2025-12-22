@@ -324,7 +324,56 @@ def main() -> Path:
 
     in_csv = processed_dir / "adult_clean.csv"
     df = _load_data(in_csv)
-
+    
+    fig_dir = reports_dir / "figures"
+    fig_dir.mkdir(parents=True, exist_ok=True)
+    
+    # 1) Distribución de hours_per_week por clase (histograma)
+    if "hours_per_week" in df.columns and "income" in df.columns:
+        plt.figure()
+        for label in ["<=50K", ">50K"]:
+            s = df.loc[df["income"].astype(str).str.strip() == label, "hours_per_week"]
+            s = pd.to_numeric(s, errors="coerce").dropna()
+            plt.hist(s.values, bins=30, alpha=0.5, label=label)
+        plt.xlabel("hours_per_week")
+        plt.ylabel("Frecuencia")
+        plt.title("Distribución de horas trabajadas por clase de income")
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(fig_dir / "hours_per_week_by_income.png", dpi=160)
+        plt.close()
+    
+    # 2) Proporción de education por clase (top 10 categorías)
+    if "education" in df.columns and "income" in df.columns:
+        tmp = df.copy()
+        tmp["income"] = tmp["income"].astype(str).str.strip()
+        top_edu = tmp["education"].astype(str).value_counts().head(10).index
+    
+        ctab = (
+            tmp[tmp["education"].astype(str).isin(top_edu)]
+            .groupby(["education", "income"])
+            .size()
+            .unstack(fill_value=0)
+        )
+    
+        # normalizar por education para ver proporciones dentro de cada categoría
+        ctab_prop = ctab.div(ctab.sum(axis=1), axis=0)
+    
+        plt.figure(figsize=(9, 4))
+        x = range(len(ctab_prop.index))
+        y0 = ctab_prop.get("<=50K", pd.Series([0]*len(ctab_prop), index=ctab_prop.index)).values
+        y1 = ctab_prop.get(">50K", pd.Series([0]*len(ctab_prop), index=ctab_prop.index)).values
+    
+        plt.bar(x, y0, label="<=50K")
+        plt.bar(x, y1, bottom=y0, label=">50K")
+        plt.xticks(list(x), list(ctab_prop.index), rotation=30, ha="right")
+        plt.ylabel("Proporción")
+        plt.title("Proporción de income por nivel educativo (top 10)")
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(fig_dir / "education_income_proportions.png", dpi=160)
+        plt.close()
+    
     y = _binary_target(df)
     dist = _class_distribution(y)
 

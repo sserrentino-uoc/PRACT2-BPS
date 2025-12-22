@@ -91,50 +91,13 @@ def main() -> Path:
     summary_path = reports_dir / "summary.json"
     summary = _load_summary(summary_path)
 
-        # --- Extraer métricas del summary.json de forma robusta ---
-    sup = summary.get("supervised", {}) or summary.get("supervised_model", {}) or {}
-    sup_auc = sup.get("roc_auc") or sup.get("auc") or sup.get("ROC_AUC")
-    sup_acc = sup.get("accuracy") or sup.get("acc") or sup.get("ACC")
-    
-    # métricas de la clase positiva (>50K), si existen
-    sup_pos = sup.get("positive_class", {}) or sup.get(">50K", {}) or sup.get("class_1", {}) or {}
-    sup_rec = sup_pos.get("recall") or sup.get("recall_pos") or sup.get("recall")
-    
-    # si recall no está en positivo_class, intentar buscar en un classification_report serializado
-    if sup_rec is None:
-        rep = sup.get("classification_report", {}) or {}
-        if isinstance(rep, dict):
-            # nombres típicos
-            for key in ["1", ">50K", "True", "pos"]:
-                if key in rep and isinstance(rep[key], dict) and "recall" in rep[key]:
-                    sup_rec = rep[key]["recall"]
-                    break
 
-    # no supervisado
-    uns = summary.get("unsupervised", {}) or {}
-    cl_k = uns.get("k") or uns.get("n_clusters") or uns.get("K")
-    cl_sil = uns.get("silhouette") or uns.get("silhouette_score")
-    
-    # contraste hipótesis
-    hyp = summary.get("hypothesis_test", {}) or summary.get("hypothesis", {}) or {}
-    hyp_var = hyp.get("variable") or hyp.get("feature") or "hours_per_week"
-    hyp_mean0 = hyp.get("mean_group0") or hyp.get("mean_<=50K") or hyp.get("mean0")
-    hyp_mean1 = hyp.get("mean_group1") or hyp.get("mean_>50K") or hyp.get("mean1")
-    ci = hyp.get("bootstrap_ci") or hyp.get("ci95") or {}
-    hyp_ci_lo = ci.get("low") or ci.get("lo") or ci.get("lower")
-    hyp_ci_hi = ci.get("high") or ci.get("hi") or ci.get("upper")
-    
-    # Defaults razonables para evitar NameError si faltan claves
-    sup_auc = float(sup_auc) if sup_auc is not None else float("nan")
-    sup_acc = float(sup_acc) if sup_acc is not None else float("nan")
-    sup_rec = float(sup_rec) if sup_rec is not None else float("nan")
+    # clustering
+    clu = summary.get("clustering", {}) or {}
+    cl_k = clu.get("k", None)
+    cl_sil = clu.get("silhouette", float("nan"))
     cl_k = int(cl_k) if cl_k is not None else None
     cl_sil = float(cl_sil) if cl_sil is not None else float("nan")
-    hyp_mean0 = float(hyp_mean0) if hyp_mean0 is not None else float("nan")
-    hyp_mean1 = float(hyp_mean1) if hyp_mean1 is not None else float("nan")
-    hyp_ci_lo = float(hyp_ci_lo) if hyp_ci_lo is not None else float("nan")
-    hyp_ci_hi = float(hyp_ci_hi) if hyp_ci_hi is not None else float("nan")
-
 
     missing_before = pd.read_csv(tables_dir / "missing_before.csv", index_col=0)
     missing_after = pd.read_csv(tables_dir / "missing_after.csv", index_col=0)
@@ -172,6 +135,9 @@ def main() -> Path:
 
     # Baseline: predecir siempre clase mayoritaria
     maj_acc = max(p0, p1)
+
+    clean_path = processed_dir / "adult_clean.csv"
+    df_clean = pd.read_csv(clean_path)
 
     md: List[str] = []
     md.append("# Práctica 2 — Análisis del dataset Adult Income (Python)")
@@ -233,6 +199,15 @@ def main() -> Path:
               "para identificar patrones y estructura potencial en los datos, sin asumir grupos “reales” o interpretables a priori.")
     md.append("")
 
+    md.append("")
+    md.append("**Fuente de datos (citación):**")
+    md.append("")
+    md.append("- Becker, B. & Kohavi, R. (1996). *Adult* [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5XW20")
+    md.append("")
+
+    md.append("**Nota ética y de uso**: el dataset es de uso académico/público; el análisis se presenta con fines formativos. "
+              "Se evita cualquier interpretación discriminatoria y no se realizan afirmaciones causales a partir de variables sensibles.")
+    md.append("")
 
     # 2
     md.append("## 2. Integración y selección de los datos")
@@ -242,6 +217,38 @@ def main() -> Path:
         "capital_gain/capital_loss y categóricas de contexto)."
     )
     md.append("")
+
+    md.append("**Resumen a simple vista (dataset integrado):**")
+    md.append("")
+    
+    # Resumen numéricas (describe compacta)
+    num_cols = df_clean.select_dtypes(include=["number"]).columns.tolist()
+    if num_cols:
+        desc = df_clean[num_cols].describe().T
+        cols_show = [c for c in ["count", "mean", "std", "min", "25%", "50%", "75%", "max"] if c in desc.columns]
+        desc = desc[cols_show].round(2)
+        md.append("**Variables numéricas — estadísticos básicos:**")
+        md.append("")
+        md.append(desc.reset_index().rename(columns={"index": "variable"}).to_markdown(index=False))
+        md.append("")
+    
+    # Resumen categóricas (nunique + top)
+    cat_cols = [c for c in df_clean.columns if c not in num_cols]
+    # evitar listar demasiadas
+    cat_cols = [c for c in cat_cols if c != "income"][:6]
+    if cat_cols:
+        rows = []
+        for c in cat_cols:
+            s = df_clean[c].astype("string").str.strip()
+            nun = int(s.nunique(dropna=True))
+            top = s.value_counts(dropna=True).head(1)
+            top_val = str(top.index[0]) if len(top) else ""
+            top_n = int(top.iloc[0]) if len(top) else 0
+            rows.append({"variable": c, "n_categorías": nun, "categoría_más_frecuente": top_val, "frecuencia": top_n})
+        md.append("**Variables categóricas — resumen de categorías:**")
+        md.append("")
+        md.append(pd.DataFrame(rows).to_markdown(index=False))
+        md.append("")
 
     # 3
     md.append("## 3. Limpieza de los datos")
@@ -274,21 +281,21 @@ def main() -> Path:
         md.append("")
 
         # Observaciones
-    md.append("**Observaciones:**")
-    
-    if semantic_before is not None and len(semantic_before) > 0:
-        df_sem = semantic_before.copy()
-    
-        # Detectar el nombre de la columna que contiene el nombre de variable
-        col_name = None
-        for candidate in ["col", "column", "variable", "feature", "attribute"]:
-            if candidate in df_sem.columns:
-                col_name = candidate
-                break
-        if col_name is None:
-            # fallback: primera columna
-            col_name = df_sem.columns[0]
-    
+        md.append("**Observaciones:**")
+        
+        if semantic_before is not None and len(semantic_before) > 0:
+            df_sem = semantic_before.copy()
+        
+            # Asegurar que el nombre de variable esté en una columna 'col'
+            if "col" not in df_sem.columns:
+                df_sem = df_sem.reset_index()
+                if "index" in df_sem.columns:
+                    df_sem = df_sem.rename(columns={"index": "col"})
+                else:
+                    df_sem = df_sem.rename(columns={df_sem.columns[0]: "col"})
+            col_name = "col"
+        
+
         # Detectar columnas de conteo y porcentaje
         count_name = None
         for candidate in ["missing_count", "count", "n_missing", "missing", "num_missing"]:
@@ -409,8 +416,6 @@ def main() -> Path:
 
     # 5.1 Preview del dataset limpio (estratificada)
     md.append("### 5.1 Vista previa del dataset limpio")
-    clean_path = processed_dir / "adult_clean.csv"
-    df_clean = pd.read_csv(clean_path)
 
     preview_cols = [
         "age",
@@ -475,6 +480,16 @@ def main() -> Path:
     md.append("![Confusion Matrix](figures/confusion_matrix.png)")
     md.append("")
 
+    md.append("**Distribución de `hours_per_week` por clase**")
+    md.append("")
+    md.append("![hours_per_week por income](figures/hours_per_week_by_income.png)")
+    md.append("")
+    
+    md.append("**Proporción de `income` por nivel educativo (top 10)**")
+    md.append("")
+    md.append("![education vs income](figures/education_income_proportions.png)")
+    md.append("")
+
     # 6
     md.append("## 6. Conclusiones")
     
@@ -490,20 +505,20 @@ def main() -> Path:
     # Conclusiones supervisado
     md.append(
         f"- **Modelo supervisado**: el clasificador logra un desempeño global sólido "
-        f"(ROC-AUC = **{sup_auc:.4f}**, accuracy = **{sup_acc:.4f}**), superando claramente el baseline de clase mayoritaria. "
-        f"Sin embargo, la recuperación de la clase `>50K` (recall = **{sup_rec:.3f}**) es moderada, coherente con el desbalance."
+        f"(ROC-AUC = **{sup['roc_auc']:.4f}**, accuracy = **{sup['accuracy']:.4f}**), superando claramente el baseline de clase mayoritaria. "
+        f"Sin embargo, la recuperación de la clase `>50K` (recall = **{sup['recall_pos']:.3f}**) es moderada, coherente con el desbalance."
+    )
+      
+    # Conclusiones contraste (tomar del summary real)
+    md.append(
+        f"- **Contraste de hipótesis**: se observan diferencias consistentes entre grupos en `{hyp.get('variable','hours_per_week')}`. "
+        f"La diferencia de medias estimada es aproximadamente **{(hyp['mean1'] - hyp['mean0']):.2f}** horas/semana "
+        f"(IC 95% bootstrap: **[{hyp['ci_mean_diff_lo']:.2f}, {hyp['ci_mean_diff_hi']:.2f}]**), con evidencia estadística muy fuerte."
     )
     
-    # Conclusiones contraste
+    # Conclusiones no supervisado (tomar del summary real)
     md.append(
-        f"- **Contraste de hipótesis**: se observan diferencias consistentes entre grupos en `{hyp_var}`. "
-        f"La diferencia de medias estimada es aproximadamente **{hyp_mean1 - hyp_mean0:.2f}** horas/semana "
-        f"(IC 95% bootstrap: **[{hyp_ci_lo:.2f}, {hyp_ci_hi:.2f}]**), con evidencia estadística muy fuerte."
-    )
-    
-    # Conclusiones no supervisado
-    md.append(
-        f"- **Modelo no supervisado (exploratorio)**: con PCA + KMeans (k={cl_k}) se obtiene un silhouette ≈ **{cl_sil:.3f}**, "
+        f"- **Modelo no supervisado (exploratorio)**: con PCA + KMeans (k={clu['k']}) se obtiene un silhouette ≈ **{clu['silhouette']:.3f}**, "
         "lo que sugiere cierta separación estructural en los datos, sin implicar necesariamente grupos “reales” o interpretables."
     )
     
@@ -511,6 +526,15 @@ def main() -> Path:
     md.append(
         "**Limitaciones**: este análisis es observacional; los resultados describen asociaciones y capacidad predictiva, "
         "pero no permiten afirmar causalidad. El clustering se interpreta como exploratorio."
+    )
+    md.append("")
+
+    md.append("")
+    md.append(
+        "**Respuesta al problema planteado**: en términos descriptivos y predictivos, "
+        "los resultados **sí permiten** abordar la pregunta propuesta: se observan asociaciones consistentes "
+        "entre variables del perfil socio-laboral y el nivel de ingresos, y el modelo supervisado logra "
+        "discriminar adecuadamente la clase `>50K` (AUC alto) respecto al baseline."
     )
     md.append("")
 

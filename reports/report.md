@@ -1,8 +1,8 @@
 # Práctica 2 — Análisis del dataset Adult Income (Python)
 
 **Integrantes**
-- NOMBRE APELLIDO (Integrante 1)
-- NOMBRE APELLIDO (Integrante 2)
+- SEBASTIAN SERRENTINO MANGINO (Integrante 1)
+- ALBERTO MOCHON (Integrante 2)
 
 **Repositorio**: PENDIENTE
 
@@ -30,8 +30,39 @@ Dado el desbalance aproximado 3:1, además de la accuracy se reportan métricas 
 
 **Uso del análisis no supervisado**: las técnicas no supervisadas se emplean con fines **exploratorios**, para identificar patrones y estructura potencial en los datos, sin asumir grupos “reales” o interpretables a priori.
 
+
+**Fuente de datos (citación):**
+
+- Becker, B. & Kohavi, R. (1996). *Adult* [Dataset]. UCI Machine Learning Repository. https://doi.org/10.24432/C5XW20
+
+**Nota ética y de uso**: el dataset es de uso académico/público; el análisis se presenta con fines formativos. Se evita cualquier interpretación discriminatoria y no se realizan afirmaciones causales a partir de variables sensibles.
+
 ## 2. Integración y selección de los datos
 Se integran los conjuntos train y test del Adult Income y se conservan las variables estándar del dominio (edad, educación, horas, capital_gain/capital_loss y categóricas de contexto).
+
+**Resumen a simple vista (dataset integrado):**
+
+**Variables numéricas — estadísticos básicos:**
+
+| variable       |   count |      mean |       std |   min |    25% |    50% |    75% |            max |
+|:---------------|--------:|----------:|----------:|------:|-------:|-------:|-------:|---------------:|
+| age            |   48842 |     38.64 |     13.71 |    17 |     28 |     37 |     48 |    90          |
+| fnlwgt         |   48842 | 189664    | 105604    | 12285 | 117550 | 178144 | 237642 |     1.4904e+06 |
+| education_num  |   48842 |     10.08 |      2.57 |     1 |      9 |     10 |     12 |    16          |
+| capital_gain   |   48842 |    785.87 |   3827.24 |     0 |      0 |      0 |      0 | 41310          |
+| capital_loss   |   48842 |     86.14 |    394.38 |     0 |      0 |      0 |      0 |  2258          |
+| hours_per_week |   48842 |     40.42 |     12.39 |     1 |     40 |     40 |     45 |    99          |
+
+**Variables categóricas — resumen de categorías:**
+
+| variable       |   n_categorías | categoría_más_frecuente   |   frecuencia |
+|:---------------|---------------:|:--------------------------|-------------:|
+| workclass      |              9 | Private                   |        33906 |
+| education      |             16 | HS-grad                   |        15784 |
+| marital_status |              7 | Married-civ-spouse        |        22379 |
+| occupation     |             15 | Prof-specialty            |         6172 |
+| relationship   |              6 | Husband                   |        19716 |
+| race           |              5 | White                     |        41762 |
 
 ## 3. Limpieza de los datos
 ### 3.1 Faltantes y/o valores perdidos
@@ -56,9 +87,9 @@ Faltantes semánticos antes de la limpieza (incluye '?', vacío y equivalentes) 
 | education      |               0 |       0       |
 
 **Observaciones:**
-- La variable `2809.0` concentra faltantes semánticos: **2809** registros (**5.75%** aprox.).
-- La variable `2799.0` concentra faltantes semánticos: **2799** registros (**5.73%** aprox.).
-- La variable `857.0` concentra faltantes semánticos: **857** registros (**1.75%** aprox.).
+- La variable `occupation` concentra faltantes semánticos: **2809** registros (**5.75%** aprox.).
+- La variable `workclass` concentra faltantes semánticos: **2799** registros (**5.73%** aprox.).
+- La variable `native_country` concentra faltantes semánticos: **857** registros (**1.75%** aprox.).
 - Este patrón sugiere que la ausencia de información no es uniforme y debe tratarse explícitamente para evitar sesgos.
 
 ## 4. Análisis y métricas
@@ -112,6 +143,14 @@ Se incluyen las figuras principales del análisis:
 
 ![Confusion Matrix](figures/confusion_matrix.png)
 
+**Distribución de `hours_per_week` por clase**
+
+![hours_per_week por income](figures/hours_per_week_by_income.png)
+
+**Proporción de `income` por nivel educativo (top 10)**
+
+![education vs income](figures/education_income_proportions.png)
+
 ## 6. Conclusiones
 A partir del proceso de limpieza y del análisis posterior, se obtienen las siguientes conclusiones principales:
 
@@ -119,10 +158,13 @@ A partir del proceso de limpieza y del análisis posterior, se obtienen las sigu
 - **Valores extremos**: variables como `capital_gain` y `capital_loss` presentan colas largas; la winsorización permite estabilizar el análisis sin eliminar observaciones.
 
 - **Modelo supervisado**: el clasificador logra un desempeño global sólido (ROC-AUC = **0.9048**, accuracy = **0.8529**), superando claramente el baseline de clase mayoritaria. Sin embargo, la recuperación de la clase `>50K` (recall = **0.601**) es moderada, coherente con el desbalance.
-- **Contraste de hipótesis**: se observan diferencias consistentes entre grupos en `hours_per_week`. La diferencia de medias estimada es aproximadamente **6.61** horas/semana (IC 95% bootstrap: **[nan, nan]**), con evidencia estadística muy fuerte.
-- **Modelo no supervisado (exploratorio)**: con PCA + KMeans (k=None) se obtiene un silhouette ≈ **nan**, lo que sugiere cierta separación estructural en los datos, sin implicar necesariamente grupos “reales” o interpretables.
+- **Contraste de hipótesis**: se observan diferencias consistentes entre grupos en `hours_per_week`. La diferencia de medias estimada es aproximadamente **6.61** horas/semana (IC 95% bootstrap: **[6.39, 6.86]**), con evidencia estadística muy fuerte.
+- **Modelo no supervisado (exploratorio)**: con PCA + KMeans (k=2) se obtiene un silhouette ≈ **0.412**, lo que sugiere cierta separación estructural en los datos, sin implicar necesariamente grupos “reales” o interpretables.
 
 **Limitaciones**: este análisis es observacional; los resultados describen asociaciones y capacidad predictiva, pero no permiten afirmar causalidad. El clustering se interpreta como exploratorio.
+
+
+**Respuesta al problema planteado**: en términos descriptivos y predictivos, los resultados **sí permiten** abordar la pregunta propuesta: se observan asociaciones consistentes entre variables del perfil socio-laboral y el nivel de ingresos, y el modelo supervisado logra discriminar adecuadamente la clase `>50K` (AUC alto) respecto al baseline.
 
 ## 7. Código
 El código fuente se encuentra en `src/`. Para ejecutar el pipeline: `python -m src.run_all`.
@@ -133,7 +175,7 @@ Enlace al vídeo (Google Drive UOC): PENDIENTE
 ## Tabla de contribuciones
 | Contribuciones | Firma |
 |---|---|
-| Investigación previa | AA, BB |
-| Redacción de las respuestas | AA, BB |
-| Desarrollo del código | AA, BB |
-| Participación en el vídeo | AA, BB |
+| Investigación previa | SS, AM |
+| Redacción de las respuestas | SS, AM |
+| Desarrollo del código | SS, AM |
+| Participación en el vídeo | SS, AM |
