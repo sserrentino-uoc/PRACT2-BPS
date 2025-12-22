@@ -8,12 +8,27 @@
 
 **Vídeo**: PENDIENTE
 
-Fecha de generación: **2025-12-19**
+Fecha de generación: **2025-12-22**
 
 ## 1. Descripción del dataset
+Trabajamos con el dataset **Adult Income** (UCI), cuyo objetivo es analizar qué variables socio-demográficas y laborales se asocian con la probabilidad de percibir ingresos **>50K**.
+
 El dataset integrado contiene **48,842** registros. La variable objetivo es `income` (<=50K vs >50K).
 Distribución de clases: `<=50K` = **37,155** (76.07%), `>50K` = **11,687** (23.93%).
-Se observa desbalance aproximado 3:1. Por tanto, además de la accuracy se reportan métricas por clase (precision/recall/F1) y AUC.
+
+Este dataset resulta especialmente adecuado para un análisis estadístico y de ciencia de datos porque combina **variables numéricas y categóricas**, presenta **valores faltantes semánticos** (p. ej. `?`) y contiene **valores extremos** en variables financieras (p. ej. `capital_gain`, `capital_loss`). Estas características permiten aplicar de forma natural técnicas de integración, limpieza, validación, análisis supervisado y no supervisado, además de contrastes de hipótesis.
+
+**Estructura de variables (resumen):**
+- **Numéricas**: `age`, `fnlwgt`, `education_num`, `capital_gain`, `capital_loss`, `hours_per_week`.
+- **Categóricas**: `workclass`, `education`, `marital_status`, `occupation`, `relationship`, `race`, `sex`, `native_country`.
+- **Objetivo**: `income`.
+
+Dado el desbalance aproximado 3:1, además de la accuracy se reportan métricas por clase (precision/recall/F1) y AUC.
+
+
+**Alcance del análisis**: el objetivo del trabajo es **descriptivo y predictivo**, no causal. Por tanto, las asociaciones observadas no deben interpretarse como relaciones causa–efecto.
+
+**Uso del análisis no supervisado**: las técnicas no supervisadas se emplean con fines **exploratorios**, para identificar patrones y estructura potencial en los datos, sin asumir grupos “reales” o interpretables a priori.
 
 ## 2. Integración y selección de los datos
 Se integran los conjuntos train y test del Adult Income y se conservan las variables estándar del dominio (edad, educación, horas, capital_gain/capital_loss y categóricas de contexto).
@@ -40,21 +55,11 @@ Faltantes semánticos antes de la limpieza (incluye '?', vacío y equivalentes) 
 | marital_status |               0 |       0       |
 | education      |               0 |       0       |
 
-Tratamiento aplicado: categóricas imputadas como `Unknown` y numéricas imputadas con mediana.
-
-### 3.2 Tipos de variables y transformaciones
-Se normalizan categóricas (strip) y se tipifican numéricas con coerción segura (valores inválidos pasan a NA y se imputan).
-
-### 3.3 Tratamiento de valores extremos
-Para `capital_gain` y `capital_loss` se aplica winsorización al percentil 99.5% para limitar el impacto de colas extremas en modelos lineales y métricas.
-
-| col          |   cap |   n_capped |
-|:-------------|------:|-----------:|
-| capital_gain | 41310 |        244 |
-| capital_loss |  2258 |        237 |
-
-### 3.4 Consideraciones adicionales
-Se preserva el tamaño muestral evitando eliminar filas con faltantes; esto reduce riesgo de sesgo por eliminación y mantiene potencia estadística.
+**Observaciones:**
+- La variable `2809.0` concentra faltantes semánticos: **2809** registros (**5.75%** aprox.).
+- La variable `2799.0` concentra faltantes semánticos: **2799** registros (**5.73%** aprox.).
+- La variable `857.0` concentra faltantes semánticos: **857** registros (**1.75%** aprox.).
+- Este patrón sugiere que la ausencia de información no es uniforme y debe tratarse explícitamente para evitar sesgos.
 
 ## 4. Análisis y métricas
 ### 4.1 Supervisado y no supervisado
@@ -108,7 +113,16 @@ Se incluyen las figuras principales del análisis:
 ![Confusion Matrix](figures/confusion_matrix.png)
 
 ## 6. Conclusiones
-El dataset permite construir un clasificador con buen desempeño (AUC alto) frente al baseline, aunque la recuperación de la clase `>50K` es moderada por el desbalance. El contraste sugiere diferencias consistentes en horas trabajadas entre grupos. El análisis no supervisado se interpreta como exploratorio.
+A partir del proceso de limpieza y del análisis posterior, se obtienen las siguientes conclusiones principales:
+
+- **Calidad del dato y limpieza**: la presencia de faltantes semánticos (`?`) se concentra en variables específicas (p. ej., `occupation`, `workclass`, `native_country`), por lo que tratarlas explícitamente mejora la consistencia del análisis y evita perder filas.
+- **Valores extremos**: variables como `capital_gain` y `capital_loss` presentan colas largas; la winsorización permite estabilizar el análisis sin eliminar observaciones.
+
+- **Modelo supervisado**: el clasificador logra un desempeño global sólido (ROC-AUC = **0.9048**, accuracy = **0.8529**), superando claramente el baseline de clase mayoritaria. Sin embargo, la recuperación de la clase `>50K` (recall = **0.601**) es moderada, coherente con el desbalance.
+- **Contraste de hipótesis**: se observan diferencias consistentes entre grupos en `hours_per_week`. La diferencia de medias estimada es aproximadamente **6.61** horas/semana (IC 95% bootstrap: **[nan, nan]**), con evidencia estadística muy fuerte.
+- **Modelo no supervisado (exploratorio)**: con PCA + KMeans (k=None) se obtiene un silhouette ≈ **nan**, lo que sugiere cierta separación estructural en los datos, sin implicar necesariamente grupos “reales” o interpretables.
+
+**Limitaciones**: este análisis es observacional; los resultados describen asociaciones y capacidad predictiva, pero no permiten afirmar causalidad. El clustering se interpreta como exploratorio.
 
 ## 7. Código
 El código fuente se encuentra en `src/`. Para ejecutar el pipeline: `python -m src.run_all`.
