@@ -402,9 +402,12 @@ def main() -> Path:
     md.append(f"p-value = **{pval_txt}**.")
     if "ci_mean_diff_lo" in hyp and "ci_mean_diff_hi" in hyp:
         md.append(
-            "IC 95% (bootstrap) para la diferencia de **medias** "
-            f"(>50K − <=50K): **[{hyp['ci_mean_diff_lo']:.2f}, {hyp['ci_mean_diff_hi']:.2f}]**."
-        )
+                "Como medida complementaria de magnitud, se estima mediante bootstrap el IC 95% "
+                "para la **diferencia de medias** (>50K − <=50K): "
+                f"**[{hyp['ci_mean_diff_lo']:.2f}, {hyp['ci_mean_diff_hi']:.2f}]**. "
+                "El test Mann–Whitney U contrasta diferencias de ubicación/distribución, "
+                "no específicamente de medias."
+            )
     md.append(
         "Interpretación: evidencia estadística fuerte de diferencias entre grupos; "
         "esto indica asociación, no causalidad."

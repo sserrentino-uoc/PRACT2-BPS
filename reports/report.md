@@ -107,7 +107,7 @@ Interpretación: el clustering es exploratorio y depende del muestreo; no se ext
 Contraste entre grupos de `income` sobre `hours_per_week` usando **Mann–Whitney U** (prueba no paramétrica, no requiere normalidad).
 Medias: <=50K = **38.84**, >50K = **45.45**. Medianas: <=50K = **40.00**, >50K = **40.00**.
 p-value = **< 1e-300**.
-IC 95% (bootstrap) para la diferencia de **medias** (>50K − <=50K): **[6.39, 6.86]**.
+Como medida complementaria de magnitud, se estima mediante bootstrap el IC 95% para la **diferencia de medias** (>50K − <=50K): **[6.39, 6.86]**. El test Mann–Whitney U contrasta diferencias de ubicación/distribución, no específicamente de medias.
 Interpretación: evidencia estadística fuerte de diferencias entre grupos; esto indica asociación, no causalidad.
 
 ## 5. Representación de resultados
