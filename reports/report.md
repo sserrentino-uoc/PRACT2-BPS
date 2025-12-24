@@ -8,7 +8,7 @@
 
 **Vídeo**: PENDIENTE
 
-Fecha de generación: **2025-12-22**
+Fecha de generación: **2025-12-24**
 
 ## 1. Descripción del dataset
 Trabajamos con el dataset **Adult Income** (UCI), cuyo objetivo es analizar qué variables socio-demográficas y laborales se asocian con la probabilidad de percibir ingresos **>50K**.
